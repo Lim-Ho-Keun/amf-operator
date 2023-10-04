@@ -9,7 +9,7 @@ plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: amf-operator
-repo: github.com/kt/amf-operator
+repo: github.com/Lim-Ho-Keun/amf-operator
 resources:
 - api:
     crdVersion: v1
