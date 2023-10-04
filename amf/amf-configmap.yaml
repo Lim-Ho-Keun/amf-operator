@@ -1,0 +1,185 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: amf-run
+  namespace: 5gc-amf
+data:
+  start.sh: |-
+    rm /AMF/cfg/amp.cfg
+    cat /root/run/amp.cfg > /AMF/cfg/amp.cfg.1
+    N4_IP=`ifconfig eth0 |grep "inet " |awk '{print $2}'`
+    sed "s/0.0.0.0/$N4_IP/g" /AMF/cfg/amp.cfg.1 > /AMF/cfg/amp.cfg
+    echo "server omp" >> /etc/chrony.conf
+    /usr/sbin/ntpd -u ntp:ntp -g
+    /opt/stiSOP/oamd.boot start
+    /opt/stiSOP/oamd.boot stop
+    /opt/stiSOP/oamd.boot start
+
+  sopagt.cfg: |-
+    ##### for EMS connection
+    # changing addr or port, must restart sopagt
+    manager-addr = 220.123.31.30
+    mmc-port   = 20260
+    event-port = 20261
+
+    ##### for IPC connection
+    # changing ipc-type, must restart sopagt
+    ipc-type = 1 # 0:NONE, 1:UDP, 2:TCP, 3:EPOINT (+10: use padding)
+    # for EPOINT (cluster-name, sopagt-svc-name, mp-svc-orgclass-no : mp-svc-name, ...)
+    epoint = #SVC, SOPA, 2:MMLD, 5:STATD
+
+    ##### for MML
+    sys-group-name = TB_AMF
+    EMS_MML_CFG_NAME = /opt/stiSOP/conf/mml.cfg
+    # MML for sopagt (mml : cmd-no : mml-data) ref. EMS_MML_CFG_NAME
+    MML = HELP:0, DIS-SYS:6001, DIS-VER:0:/path, DIS-CPU:6011, DIS-MEM:6013, DIS-FS:6015, DIS-NIC:6017, DIS-RESC:0, DIS-PROC:6031, START-PROC:6033, STOP-PROC:6035, RESTART-PROC:6037, CHG-LOG-PROC:0, DIS-NTP:0, ADD-NTP:0, DEL-NTP:0, DIS-LOGWORD:0, ADD-LOGWORD:0, DEL-LOGWORD:0, DIS-DELTOOL:0, ADD-DELTOOL:0, DEL-DELTOOL:0, DIS-BACKUP:0:/path, BACKUP:0:/path, RESTORE:0:/path, REBOOT:0
+    new-mmlpod   = 1, 0 # MML-style(0:OLD), POD-tab
+    ipv6         = 1 # 0:OFF
+    version      = R1.0.0
+    release-date = 2023-06-01
+    #mmi-port     = 20010
+    #mmi-passwd   = admin
+
+    ##### for SYSSTAT
+    stat-get-period = 15
+    stat-snd-period = 15
+
+    # SOP-EXTEND for sopagt (subtype-no=0 is not use)
+    # SYS-STAT/EVENT (name : subtype-no : payload-id : location)
+    SE-SYSSTAT = PROC:2:2, THREAD:0:0, CPU:3:11, MEM:3:13, RAM:0:0, DISK:0:0, FS:3:14, NIC:3:15:35, PS:0:0, FAN:0:0, TEMP:0:0, CTRL:0:0, SW:0:0, NTP:0:0, FD:3:26, IO:0:0, NETAPP:0:0, LOGMON:0
+
+    # add '/' at the end of name, watch thread-hang
+    dupproc = scan, sopagt, amp
+    dupkeys = # use it when dupproc is not enough.
+
+    NOT_USED_NIC = #em2, em3, em4
+    ##### for PM
+    SE-PM-TERM = 5 # MINUTE (0: disabled)
+    # PM-MSG (name : subtype-no)
+    SE-PM = CPU:3, MEM:4, DISK:5
+
+    ##### for LOG
+    LOG_CFG_PATH = /var/log/stiLOG/salog.cfg
+    log-dump     = 0 # 0:OFF
+
+  amp.cfg: |-
+    [SYSTEM]
+    PKG_NAME=AMF
+    SYS_NAME=VAMF
+    PROC_NAME=AMP
+    #SYS_NO=0
+    SYS_HOST_1=vamf1
+    SYS_HOST_2=vamf2
+    AMF_NAME=ncAmf-test-12
+
+    [LICENSE]
+    LIC_SO_PATH=/lib/5gc-license
+
+    [TIMER]
+    RECON_INTERVAL=50 #100 msec
+    HANG_DURATION=60
+    ABNORMAL_DURATION=300
+    HEARBEAT_INTERVAL=600
+    #HEARBEAT_INTERVAL=1800
+    RSP_WAIT=20 #100 msec
+    #DUP_HOLD_TIME=3600 #100 msec
+    #DUP_HOLD_TIME=1200 #100 msec
+    DUP_HOLD_TIME=600 #100 msec
+
+    [PFCP_TIMER]
+    T1_TIMER=20
+    N1_COUNTER=3
+    ECHO_INTERVAL=600
+    ECHO_COUNT=3
+
+    [LOG]
+    LOG_FILE=/AMF/log/AMP/amp.log
+    LOG_FLAG=Warning,Error,Trace
+    #LOG_FLAG=Warning,Error,Trace,Debug
+    #LOG_FLAG=Warning,Error,Trace,Debug,In/Out
+    #LOG_FLAG=Trace,Warning,Error,Log,Test,Timer,Devel,Maint,Debug,In/Out
+    LOG_MAX_SIZE=100
+    LOG_MAX_CNT=10
+
+    [SBI_SEVER]
+    #MY_ADDR=192.168.20.190
+    MY_ADDR=0.0.0.0
+    MY_PORT=80
+    USE_TLS=YES
+    TLS_PORT=443
+    TLS_KEY=amf.key
+    TLS_PEM=amf.pem
+
+    [SBI_CLIENT]
+    NRF_ADDR=127.0.0.10
+    NRF_PORT=7777
+    #AMF_ADDR=
+    #AMF_PORT=
+    #UDM_ADDR=192.168.20.61
+    UDM_ADDR=10.104.44.110
+    UDM_PORT=80
+    AUSF_ADDR=10.104.44.110
+    AUSF_PORT=80
+    SMF_CNT=1
+    SMF_ADDR1=10.104.44.110
+    SMF_PORT1=80
+    SMF_SST1=1
+
+    [N2_ALLOWED_GNB]
+    GNBCnt=3
+    GNBAddr1=192.168.10.100
+    GNBAddr2=10.100.20.36
+    GNBAddr3=192.168.30.200
+
+    [N2_SUPPORT_DNN]
+    DNNCnt=2
+    DNN1=internet
+    DNN2=ims
+    DNN3=tethering
+    DNN4=internet2
+    DNN5=internet3
+
+    [S_NSSAI]
+    SST=1
+
+    [N2_SERVER]
+    #MY_ADDR=192.168.20.190
+    MY_ADDR=192.168.10.32
+    MY_PORT=38412
+
+    [N2_CLIENT]
+    #GNB_ADDR=192.168.30.150
+    #GNB_PORT=38412
+
+    [PLMN]
+    MCC=001
+    MNC=01
+
+    [GUAMI]
+    REGION_ID=2
+    SET_ID=1
+    POINTER=0
+
+    [INT_ALG]
+    INTCnt=4
+    INT1=IA3
+    INT2=IA1
+    INT3=IA2
+    INT4=IA0
+
+    [ENC_ALG]
+    ENCCnt=4
+    ENC1=EA0
+    ENC2=EA1
+    ENC3=EA2
+    ENC4=EA3
+
+    [JDR]
+    JDRCnt=0
+    JDRFile1=AMF_STAT_AMF_N2_CLOG
+    JDRWriteDir1=/AMF/data/Doing
+    JDRMoveDir1=/AMF/data/Done
+    JDRSplitPeriod1=5
+    JDRExtern1=
+    JDRHeader1=
+

@@ -1,0 +1,13 @@
+apiVersion: fiveg.kt.com/v1alpha1
+kind: AMF
+metadata:
+  labels:
+    app.kubernetes.io/name: amf
+    app.kubernetes.io/instance: amf-sample
+    app.kubernetes.io/part-of: amf-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: amf-operator
+  name: amf-sample
+  namespace: 5gc-amf
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,27 @@
+# permissions for end users to view amfs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: amf-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: amf-operator
+    app.kubernetes.io/part-of: amf-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: amf-viewer-role
+rules:
+- apiGroups:
+  - fiveg.kt.com
+  resources:
+  - amfs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - fiveg.kt.com
+  resources:
+  - amfs/status
+  verbs:
+  - get
